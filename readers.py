@@ -1,10 +1,11 @@
 import numpy as np
+from sklearn.preprocessing import StandardScaler, minmax_scale
 import os
 
 dataset_file = os.curdir + '/dataset/risk_factors_cervical_cancer.csv'
 
 
-def read_dataset(handle_sparse=True):
+def read_dataset(handle_sparse=True, preprocess='uniform'):
     """
     reads the risk factors cervical cancer dataset utilizing numpy.
     handle_sparse=True substitutes the absent features for their dataset average
@@ -21,4 +22,8 @@ def read_dataset(handle_sparse=True):
         data[ix] = np.take(means, ix[1])  # replace NaN with mean
 
     labels = raw_data[:, -1]  # labels generated from the biopsy column
+
+    if preprocess == 'uniform':
+        data = minmax_scale(data)
+
     return data, labels
