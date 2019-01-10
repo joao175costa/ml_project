@@ -6,24 +6,26 @@ import pickle
 
 from readers import read_dataset
 
-from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit, StratifiedKFold
 from sklearn.pipeline import Pipeline, make_pipeline
 
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.svm import SVC
 
 from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding, SpectralEmbedding, MDS
 
+from sklearn.feature_selection import RFECV, SelectPercentile, mutual_info_classif
+
 from sklearn import metrics
 
 
-def classic_classifiers(save=True, folder_path='results/'):
+def classic_classifiers(save=True, folder_path='results/', screening='HSC'):
     n_shuffles = 10
-    X, Y = read_dataset()
+    X, Y = read_dataset(screening=screening)
     ssf = StratifiedShuffleSplit(n_splits=n_shuffles, test_size=.3)  # 10 splits to calculate the average metrics
     cv = 3  # internal number of folds for cross validation
 
@@ -148,8 +150,6 @@ def process_results(results):
 def tsne():
     X, Y = read_dataset()
     X_embedded = TSNE().fit_transform(X)
-    plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=Y)
-    plt.show()
     return 0
 
 
@@ -162,3 +162,37 @@ def isomap():
               'clf__C': np.logspace(-4, 4, 9)}
     grid_search = GridSearchCV(pipe, cv=5, param_grid=params, n_jobs=-1, verbose=10, refit=True, scoring='recall')
     grid_search.fit(Xtrain, Ytrain)
+
+
+def feature_selection():
+    X, Y = read_dataset()
+    feature_names = np.array(list(pd.read_csv('./dataset/risk_factors_cervical_cancer.csv', header=0, index_col=None))[:-1])
+
+    selector = SelectPercentile(score_func=mutual_info_classif, percentile=50)
+    selector.fit(X, Y)
+    scores = selector.scores_
+    removed = np.logical_not(selector.get_support())
+    print('removed features', feature_names[removed])
+    scores, feature_names = zip(*sorted(zip(scores, feature_names)))
+    plt.figure()
+    plt.barh(feature_names, scores)
+    plt.show()
+
+
+def select_reduce_classify():
+    X, Y = read_dataset()
+    selection = SelectPercentile(score_func=mutual_info_classif)
+    reduction = Isomap()
+    classifier = GridSearchCV(estimator=SVC(gamma='scale',
+                                            probability=True
+                                            ),
+                              cv=5,
+                              refit=True,
+                              n_jobs=-1,
+                              iid=False,
+                              scoring='average_precision',
+                              param_grid={'C': np.logspace(-3, 3, num=7),
+                                          'kernel': ['rbf', 'linear'],
+                                          }
+                              )
+

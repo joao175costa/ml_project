@@ -6,7 +6,9 @@ from classification import *
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    results, table = classic_classifiers()
-
-print(table)
+    # for comb in ['', 'H', 'S', 'C', 'HS', 'HC', 'SC', 'HSC']:
+    #     results, table = classic_classifiers(screening=comb)
+    #     print(table)
+    #feature_selection()
+    select_reduce_classify()
 
