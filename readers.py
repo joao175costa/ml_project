@@ -14,17 +14,25 @@ def read_dataset(handle_sparse=True, preprocess='uniform', screening='HSC'):
     :returns: data (n_samples*n_feats), labels (n_samples)
     """
 
-    raw_data = np.genfromtxt(dataset_file, delimiter=',', skip_header=1, missing_values='?')
+    raw_data = np.genfromtxt(dataset_file, delimiter=',', missing_values='?', names=True)
+    raw_feature_names = raw_data.dtype.names
+    raw_data = np.genfromtxt(dataset_file, delimiter=',', missing_values='?', skip_header=1)
+
     data = raw_data[:, :32] # remove screening and biopsies
+    feature_names = raw_feature_names[:32]
+
     labels = raw_data[:, -1]
 
     for method in screening:
         if method == 'H':
             data = np.hstack((data, raw_data[:, 32][:, None]))
+            feature_names.append(raw_feature_names[32])
         elif method == 'S':
             data = np.hstack((data, raw_data[:, 33][:, None]))
+            feature_names.append(raw_feature_names[33])
         elif method == 'C':
             data = np.hstack((data, raw_data[:, 34][:, None]))
+            feature_names.append(raw_feature_names[34])
 
     if handle_sparse:
         means = np.nanmean(data, axis=0)  # means of columns, ignoring nan
@@ -34,4 +42,4 @@ def read_dataset(handle_sparse=True, preprocess='uniform', screening='HSC'):
     if preprocess == 'uniform':
         data = minmax_scale(data)
 
-    return data, labels
+    return (data, labels), feature_names
