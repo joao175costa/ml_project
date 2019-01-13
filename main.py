@@ -12,5 +12,10 @@ with warnings.catch_warnings():
     # feature_selection()
 
     # select_reduce_classify()
-    smoteenn_sffs_reduction_classify_full()
+    #smoteenn_sffs_reduction_classify_full()
+    #feature_transform()
+    #feature_selection_filter()
+
+    risk_probability_and_screening_dataset()
+    #final_pipeline()
 
