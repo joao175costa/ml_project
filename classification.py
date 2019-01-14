@@ -1,31 +1,26 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import datetime
 import pickle
 from collections import Counter
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from imblearn.combine import SMOTEENN
 from mlxtend.feature_selection import SequentialFeatureSelector
-
-from readers import read_dataset
-
-from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit, StratifiedKFold, LeaveOneOut
-from sklearn.pipeline import Pipeline
-
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn import metrics
+from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import SelectPercentile, mutual_info_classif, SelectKBest, f_classif, chi2
+from sklearn.linear_model import LogisticRegression
+from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding, MDS
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit, StratifiedKFold, LeaveOneOut
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding, MDS
-from sklearn.decomposition import PCA
-
-from sklearn.feature_selection import SelectPercentile, mutual_info_classif, SelectKBest, f_classif, chi2
-
-from sklearn import metrics
+from readers import read_dataset
 
 
 def classic_classifiers(save=True, folder_path='results/', screening='HSC'):
@@ -391,7 +386,7 @@ def risk_probability_and_screening_dataset():
     clf = SVC(C=1000, kernel='rbf', gamma='scale', probability=True)
     loo = LeaveOneOut()
 
-    Xrisk_screening = np.hstack((np.zeros(n_samples)[:, None], Xscreening))
+    Xrisk_screening = np.hstack((np.zeros(n_samples)[:, None], Xscreening, Y[:, None]))
     for train_ix, test_ix in loo.split(X, Y):
         print(test_ix)
         Xtrain = X[train_ix]
@@ -411,7 +406,7 @@ def risk_probability_and_screening_dataset():
         Yprob = clf.predict_proba(Xtest)
         Xrisk_screening[test_ix, 0] = Yprob[0, 1]
 
-    df = pd.DataFrame(Xrisk_screening, index=None, columns=['Risk', 'Hinselmann', 'Schiller', 'Citology'])
+    df = pd.DataFrame(Xrisk_screening, index=None, columns=['Risk', 'Hinselmann', 'Schiller', 'Citology', 'Biospy'])
     df.to_csv('dataset/risk_screening_dataset.csv', index=False)
     pickle.dump(Xrisk_screening, open('dataset/risk_screening.pkl', 'wb'), -1)
 
