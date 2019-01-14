@@ -1,30 +1,34 @@
+import datetime
+import os
+import pickle
+
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import datetime
-import pickle
+from sklearn import metrics
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV, StratifiedShuffleSplit
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 from readers import read_dataset
 
-from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit, StratifiedKFold
-from sklearn.pipeline import Pipeline, make_pipeline
+os.chdir('..')  # allows saving on the results folder
 
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression, LogisticRegressionCV
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.svm import SVC
-
-from sklearn.manifold import TSNE, Isomap, LocallyLinearEmbedding, SpectralEmbedding, MDS
-
-from sklearn.feature_selection import RFECV, SelectPercentile, mutual_info_classif
-
-from sklearn import metrics
-
-
-def classic_classifiers(X, Y, imbalancelearn, save=True, folder_path='results/', screening='HSC'):
+def optimize_classic_classifiers(screening=''):
+    """
+    Tunes classic classifiers and outputs average cross-validation results for comparasion.
+    Classifers used are: NaiveBayes, RandomForest, LogisticRegression, LDA, KNN and SVC
+    Each classifier is hypertuned for each split.
+    Classifiers are trained for 10 random train/test splits.
+    :param screening: what screening features to add to the feature space, e.g., '' means no screening information is
+        used for training
+    :return: average metrics for each classifier
+    """
     n_shuffles = 10
+    X, Y = read_dataset(screening=screening)
     ssf = StratifiedShuffleSplit(n_splits=n_shuffles, test_size=.3)  # 10 splits to calculate the average metrics
     cv = 3  # internal number of folds for cross validation
 
@@ -121,77 +125,24 @@ def classic_classifiers(X, Y, imbalancelearn, save=True, folder_path='results/',
 
     print('Classifiers Trained\n')
 
-    table = process_results(results)
-
-    if save:
-        now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
-        with open(folder_path+'classic_results_' + imbalancelearn + '_' + now + '.pkl', 'wb') as f:
-            pickle.dump(results, f, -1)
-        table.to_csv(folder_path+'classic_results_' + imbalancelearn + '_' + now + '.csv')
-
-    return results, table
-
-
-def process_results(results):
     table_of_results = dict()
     for model in results:
         if type(results[model]) == list:
             # parameter lists
             continue
         table_of_results[model] = results[model]
+
     table_of_results = pd.DataFrame.from_dict(table_of_results,
                                               orient='index',
                                               columns=['Accuracy', 'Precision', 'Recall',
                                                        'avPrecision', 'Brier', 'logLoss'])
-    return table_of_results
+
+    now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+    with open('./results/classic_results_' + now + '_' +screening + '.pkl', 'wb') as f:
+        pickle.dump(results, f, -1)
+    table_of_results.to_csv('./results/classic_results_' + now + '_' + screening +'.csv')
+
+    return results, table_of_results
 
 
-def tsne():
-    X, Y = read_dataset()
-    X_embedded = TSNE().fit_transform(X)
-    return 0
-
-
-def isomap():
-    X, Y = read_dataset()
-    Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, stratify=Y, test_size=.5)
-
-    pipe = Pipeline([('embedding', Isomap()), ('clf', SVC(probability=True, gamma='scale'))])
-    params = {'embedding__n_components':[2, 5, 10, 20],
-              'clf__C': np.logspace(-4, 4, 9)}
-    grid_search = GridSearchCV(pipe, cv=5, param_grid=params, n_jobs=-1, verbose=10, refit=True, scoring='recall')
-    grid_search.fit(Xtrain, Ytrain)
-
-
-def feature_selection():
-    X, Y = read_dataset()
-    feature_names = np.array(list(pd.read_csv('./dataset/risk_factors_cervical_cancer.csv', header=0, index_col=None))[:-1])
-
-    selector = SelectPercentile(score_func=mutual_info_classif, percentile=50)
-    selector.fit(X, Y)
-    scores = selector.scores_
-    removed = np.logical_not(selector.get_support())
-    print('removed features', feature_names[removed])
-    scores, feature_names = zip(*sorted(zip(scores, feature_names)))
-    plt.figure()
-    plt.barh(feature_names, scores)
-    plt.show()
-
-
-def select_reduce_classify():
-    X, Y = read_dataset()
-    selection = SelectPercentile(score_func=mutual_info_classif)
-    reduction = Isomap()
-    classifier = GridSearchCV(estimator=SVC(gamma='scale',
-                                            probability=True
-                                            ),
-                              cv=5,
-                              refit=True,
-                              n_jobs=-1,
-                              iid=False,
-                              scoring='average_precision',
-                              param_grid={'C': np.logspace(-3, 3, num=7),
-                                          'kernel': ['rbf', 'linear'],
-                                          }
-                              )
-
+optimize_classic_classifiers()

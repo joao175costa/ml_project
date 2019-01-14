@@ -7,7 +7,7 @@ dataset_file = os.curdir + '/dataset/risk_factors_cervical_cancer.csv'  # path f
 screening_dataset_file = os.curdir + '/dataset/risk_screening_dataset.csv'  # path for created risk probability dataset
 
 
-def read_dataset(handle_sparse='mean', preprocess='uniform', screening='HSC'):
+def read_dataset(handle_sparse='mice', preprocess='uniform', screening='HSC'):
     """
     reads the risk factors cervical cancer dataset utilizing numpy.
     Args:

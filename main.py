@@ -1,21 +1,13 @@
-import numpy as np
-import pickle
-import datetime
-import warnings
-from classification import *
+from pipelines import cervical_cancer_classification, risk_screening_classification
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    # for comb in ['', 'H', 'S', 'C', 'HS', 'HC', 'SC', 'HSC']:
-    #     results, table = classic_classifiers(screening=comb)
-    #     print(table)
-    # feature_selection()
 
-    # select_reduce_classify()
-    #smoteenn_sffs_reduction_classify_full()
-    #feature_transform()
-    #feature_selection_filter()
+# print results for the two implemented pipelines, with optimized steps
+results = {}
+print('Classification Results Using Cervical Cancer Pipeline')
+for comb in ['', 'H', 'S', 'C', 'HS', 'HC', 'SC', 'HSC']:
+    results[comb] = cervical_cancer_classification(screening=comb)
+    print(comb, results[comb])
 
-    risk_probability_and_screening_dataset()
-    #final_pipeline()
-
+print('Classification Results Using 2-classifier Risk+Screening Pipeline')
+results['2clf'] = risk_screening_classification()
+print('2clf', results['2clf'])
