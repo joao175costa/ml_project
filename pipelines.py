@@ -15,7 +15,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from readers import read_dataset, read_screening_dataset
 
-sbfs_path = './optimization/smoteenn_sbfs.pkl'
+sffs_path = './optimization/smoteenn_sffs.pkl'
 
 
 def cervical_cancer_classification(screening=''):
@@ -24,10 +24,10 @@ def cervical_cancer_classification(screening=''):
     :param screening:
     :return:
     """
-    sbfs = pickle.load(open(sbfs_path, 'rb'))
+    sbfs = pickle.load(open(sffs_path, 'rb'))
 
-    (X, Y), feature_names = read_dataset(handle_sparse='mice', screening='HSC')
-    clf = sbfs.estimator
+    (X, Y), feature_names = read_dataset(handle_sparse='mean', screening='HSC')
+    clf = SVC(C=1000, kernel='rbf', probability=True, gamma='scale')
     feature_mask_sfs = list(sbfs.k_feature_idx_)
     for s in screening:
         if s == 'H':
@@ -97,12 +97,12 @@ def risk_screening_classification():
     X = X[:, :32]
     n_repeats = 10
 
-    feature_mask_sfs = list(pickle.load(open('optimization/smoteenn_sbfs.pkl', 'rb')).k_feature_idx_)
+    feature_mask_sfs = list(pickle.load(open(sffs_path, 'rb')).k_feature_idx_)
     clf = SVC(C=1000, kernel='rbf', gamma='scale', probability=True)
-    repeated_kfold = StratifiedShuffleSplit(n_splits=n_repeats, test_size=.5)
+    repeated_shuffle = StratifiedShuffleSplit(n_splits=n_repeats, test_size=.5)
 
     results = []
-    for repeat_n, (train_ix, test_ix) in enumerate(repeated_kfold.split(X, Y)):
+    for repeat_n, (train_ix, test_ix) in enumerate(repeated_shuffle.split(X, Y)):
         # print('repeat', repeat_n)
 
         Xtrain = X[train_ix]

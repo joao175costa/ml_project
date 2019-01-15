@@ -21,7 +21,7 @@ def optimize_dimensionality_reduction():
     The resulting GridSearchCV with results for each option is stored in a .pkl file
     """
 
-    sbfs = pickle.load(open('smoteenn_sbfs.pkl', 'rb'))
+    sbfs = pickle.load(open('smoteenn_sffs.pkl', 'rb'))
 
     scoring = ['accuracy',
                'precision',

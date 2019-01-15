@@ -87,6 +87,8 @@ def optimize_classic_classifiers(screening=''):
                             ))
               ]
 
+    models = [SVC(C=1000, gamma='scale', probability=True, kernel='rbf')]
+
     results = {m_name: np.zeros(6) for m_name, _ in models}
     results.update({m_name+'_params': list() for m_name, m in models if type(m) == GridSearchCV})
 
@@ -138,9 +140,9 @@ def optimize_classic_classifiers(screening=''):
                                                        'avPrecision', 'Brier', 'logLoss'])
 
     now = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
-    with open('./results/classic_results_' + now + '_' +screening + '.pkl', 'wb') as f:
+    with open('./results/classic_results_' + now + '_' + screening + '.pkl', 'wb') as f:
         pickle.dump(results, f, -1)
-    table_of_results.to_csv('./results/classic_results_' + now + '_' + screening +'.csv')
+    table_of_results.to_csv('./results/classic_results_' + now + '_' + screening + '.csv')
 
     return results, table_of_results
 
